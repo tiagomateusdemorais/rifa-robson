@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getAvailableNumbers } from '../data/raffleService';
 import { useParticipants } from '../context/ParticipantsContext';
+import { v4 as uuidv4 } from 'uuid';
 
 // Função helper para formatação de telefone (formato brasileiro)
 const formatBRPhone = (value) => {
@@ -28,17 +29,16 @@ export default function ParticipantForm() {
   useEffect(() => {
     const available = getAvailableNumbers(page, numbersPerPage);
     setAvailableNumbers(available);
-    // Scroll automático ao topo da grade
     const grid = document.querySelector('.number-grid');
     if (grid) grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [page]);
 
   const toggleNumber = (number) => {
-    if (selectedNumbers.includes(number)) {
-      setSelectedNumbers(selectedNumbers.filter((n) => n !== number));
-    } else {
-      setSelectedNumbers([...selectedNumbers, number]);
-    }
+    setSelectedNumbers((prev) =>
+      prev.includes(number)
+        ? prev.filter((n) => n !== number)
+        : [...prev, number]
+    );
   };
 
   const handlePhoneChange = (e) => {
@@ -47,18 +47,37 @@ export default function ParticipantForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const id = uuidv4(); // ID único por participante
+
     try {
-      addParticipant(name, phone, selectedNumbers);
-      // Envia para Google Sheets via Apps Script
-      const endpoint = import.meta.env.VITE_SHEET_ENDPOINT;
-      if (endpoint) {
-        await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, phone, numbers: selectedNumbers }),
-        });
+      // Adiciona ao app local
+      addParticipant(name, phone, selectedNumbers, id);
+
+      // Envia ao Google Sheets via proxy
+      const endpoint = 'https://rifa-robson-proxy.onrender.com/api/send';
+      const payload = {
+        id,
+        name,
+        phone,
+        numbers: selectedNumbers,
+        action: 'create',
+      };
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await res.json();
+      if (result.status === 'created' || result.status === 'updated') {
+        setMessage({ type: 'success', text: '✅ Participante cadastrado com sucesso!' });
+      } else {
+        throw new Error(result.error || 'Erro ao enviar para a planilha.');
       }
-      setMessage({ type: 'success', text: '✅ Participante cadastrado com sucesso!' });
+
+      // Limpa o formulário
       setName('');
       setPhone('');
       setSelectedNumbers([]);
@@ -109,9 +128,7 @@ export default function ParticipantForm() {
                     checked={isSelected}
                     onChange={() => toggleNumber(number)}
                   />
-                  <span>
-                    {isSelected ? '✅' : available ? number : '🔒'}
-                  </span>
+                  <span>{isSelected ? '✅' : available ? number : '🔒'}</span>
                 </label>
               );
             })}
@@ -131,11 +148,9 @@ export default function ParticipantForm() {
               >
                 ⬅️ Anterior
               </button>
-
               <span className="text-center flex-fill mb-2">
                 Página <strong>{page}</strong>
               </span>
-
               <button
                 type="button"
                 className="btn btn-outline-primary flex-fill ms-2 mb-2"
@@ -146,10 +161,7 @@ export default function ParticipantForm() {
             </div>
           </div>
         </form>
-
-        {message && (
-          <div className={`alert alert-${message.type} mt-2`}>{message.text}</div>
-        )}
+        {message && <div className={`alert alert-${message.type} mt-2`}>{message.text}</div>}
       </div>
     </div>
   );

@@ -4,9 +4,30 @@ import { useParticipants } from '../context/ParticipantsContext';
 export default function ParticipantList() {
   const { participants, removeParticipant } = useParticipants();
 
-  const handleDelete = (id) => {
-    if (window.confirm('Tem certeza que deseja excluir este participante?')) {
-      removeParticipant(id);
+  const handleDelete = async (id) => {
+    if (!window.confirm('Tem certeza que deseja excluir este participante?')) return;
+
+    // Remove localmente
+    removeParticipant(id);
+
+    // Envia ação de exclusão para a planilha via proxy
+    try {
+      const response = await fetch('https://rifa-robson-proxy.onrender.com/api/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id,
+          action: 'delete',
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.status !== 'deleted') {
+        console.warn('⚠️ Não foi possível deletar na planilha:', result);
+      }
+    } catch (err) {
+      console.error('❌ Erro ao comunicar com o proxy:', err.message);
     }
   };
 
@@ -34,7 +55,7 @@ export default function ParticipantList() {
                   className="btn btn-sm btn-danger"
                   onClick={() => handleDelete(participant.id)}
                 >
-                  Deletar
+                  🗑️ Deletar
                 </button>
               </li>
             ))}
