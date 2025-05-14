@@ -4,16 +4,20 @@ import { getUsedNumbers } from '../data/raffleService';
 import ParticipantList from './ParticipantList';
 
 export default function Dashboard() {
+  // Pega participantes do contexto para reatividade
   const { participants } = useParticipants();
+
+  const totalNumbers = 3500;
   const [sold, setSold] = useState(0);
-  const [total] = useState(3500);
   const [collected, setCollected] = useState(0);
 
   useEffect(() => {
-    const soldNumbers = getUsedNumbers().length;
-    setSold(soldNumbers);
-    setCollected(soldNumbers); // R$1 por número
-  }, [participants]); // <== Recalcula quando participantes mudam
+    // Recalcula sempre que a lista de participantes muda
+    const used = getUsedNumbers();
+    const soldCount = Array.isArray(used) ? used.length : 0;
+    setSold(soldCount);
+    setCollected(soldCount); // R$1 por número
+  }, [participants]);
 
   return (
     <div className="card">
@@ -23,13 +27,13 @@ export default function Dashboard() {
       <div className="card-body">
         <ul className="list-group">
           <li className="list-group-item">
-            <strong>Total de números:</strong> 3500
+            <strong>Total de números:</strong> {totalNumbers}
           </li>
           <li className="list-group-item">
             <strong>Vendidos:</strong> {sold}
           </li>
           <li className="list-group-item">
-            <strong>Disponíveis:</strong> {total - sold}
+            <strong>Disponíveis:</strong> {totalNumbers - sold}
           </li>
           <li className="list-group-item">
             <strong>Valor arrecadado:</strong> R$ {collected.toFixed(2)}
@@ -37,6 +41,7 @@ export default function Dashboard() {
         </ul>
       </div>
 
+      {/* Lista de participantes */}
       <ParticipantList />
     </div>
   );

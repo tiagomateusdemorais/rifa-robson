@@ -45,10 +45,19 @@ export default function ParticipantForm() {
     setPhone(formatBRPhone(e.target.value));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       addParticipant(name, phone, selectedNumbers);
+      // Envia para Google Sheets via Apps Script
+      const endpoint = import.meta.env.VITE_SHEET_ENDPOINT;
+      if (endpoint) {
+        await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, phone, numbers: selectedNumbers }),
+        });
+      }
       setMessage({ type: 'success', text: '✅ Participante cadastrado com sucesso!' });
       setName('');
       setPhone('');
