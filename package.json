@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "deploy": "npm run build && gh-pages -d dist",
-    "homepage": "https://joaosilva.github.io/rifa-solidaria"
+    "homepage": "https://tiagomateusdemorais.github.io/rifa-robson"
   },
   "dependencies": {
     "bootstrap": "^5.3.6",
