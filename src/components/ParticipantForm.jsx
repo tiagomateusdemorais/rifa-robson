@@ -48,10 +48,9 @@ export default function ParticipantForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const id = uuidv4(); // ID único por participante
-
+    const id = uuidv4(); // Garante ID único
     try {
-      // Adiciona ao app local
+      // Adiciona localmente (passa o ID gerado)
       addParticipant(name, phone, selectedNumbers, id);
 
       // Envia ao Google Sheets via proxy

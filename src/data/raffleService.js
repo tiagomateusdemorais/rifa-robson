@@ -19,7 +19,7 @@ export function saveParticipants(participants) {
   localStorage.setItem(STORAGE_KEYS.PARTICIPANTS, JSON.stringify(participants));
 }
 
-export function addParticipant(name, phone, numbers) {
+export function addParticipant(name, phone, numbers, id = uuidv4()) {
   const participants = getParticipants();
 
   const usedNumbers = getUsedNumbers();
@@ -27,7 +27,7 @@ export function addParticipant(name, phone, numbers) {
   if (hasConflict) throw new Error('Um ou mais números já estão atribuídos.');
 
   const newParticipant = {
-    id: uuidv4(),
+    id,
     name,
     phone,
     numbers,
@@ -58,7 +58,6 @@ export function getAvailableNumbers(page = 1, perPage = 200) {
     available: !usedSet.has(num),
   }));
 }
-
 
 // Sorteios
 export function getDrawHistory() {
@@ -109,6 +108,6 @@ export function drawWinners() {
 // Função para deletar um participante
 export function removeParticipant(id) {
   const participants = getParticipants();
-  const updated = participants.filter(p => p.id !== id);
+  const updated = participants.filter((p) => p.id !== id);
   saveParticipants(updated);
 }

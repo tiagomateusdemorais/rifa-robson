@@ -7,10 +7,13 @@ export default function ParticipantList() {
   const handleDelete = async (id) => {
     if (!window.confirm('Tem certeza que deseja excluir este participante?')) return;
 
+    // Localiza participante pelo ID antes de remover localmente
+    const participant = participants.find((p) => p.id === id);
+
     // Remove localmente
     removeParticipant(id);
 
-    // Envia ação de exclusão para a planilha via proxy
+    // Envia requisição ao proxy para deletar da planilha
     try {
       const response = await fetch('https://rifa-robson-proxy.onrender.com/api/send', {
         method: 'POST',
@@ -24,7 +27,8 @@ export default function ParticipantList() {
       const result = await response.json();
 
       if (result.status !== 'deleted') {
-        console.warn('⚠️ Não foi possível deletar na planilha:', result);
+        console.warn('⚠️ Participante removido localmente, mas falhou ao deletar na planilha:', result);
+        // (Opcional) aqui você pode restaurar localmente se quiser
       }
     } catch (err) {
       console.error('❌ Erro ao comunicar com o proxy:', err.message);
