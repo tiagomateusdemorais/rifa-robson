@@ -45,46 +45,49 @@ export default function ParticipantForm() {
     setPhone(formatBRPhone(e.target.value));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+ const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    const id = uuidv4(); // Garante ID único
-    try {
-      // Adiciona localmente (passa o ID gerado)
-      addParticipant(name, phone, selectedNumbers, id);
+  try {
+    // Adiciona ou atualiza localmente, e captura o ID
+    const participant = addParticipant(name, phone, selectedNumbers);
+    const id = participant.id;
 
-      // Envia ao Google Sheets via proxy
-      const endpoint = 'https://rifa-robson-proxy.onrender.com/api/send';
-      const payload = {
-        id,
-        name,
-        phone,
-        numbers: selectedNumbers,
-        action: 'create',
-      };
+    // Envia para o proxy (que envia ao Google Sheets)
+    const endpoint = 'https://rifa-robson-proxy.onrender.com/api/send';
+    const payload = {
+      id,
+      name,
+      phone,
+      numbers: participant.numbers, // envia todos os números atualizados
+      action: 'create',
+    };
 
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
 
-      const result = await res.json();
-      if (result.status === 'created' || result.status === 'updated') {
-        setMessage({ type: 'success', text: '✅ Participante cadastrado com sucesso!' });
-      } else {
-        throw new Error(result.error || 'Erro ao enviar para a planilha.');
-      }
+    const result = await res.json();
 
-      // Limpa o formulário
-      setName('');
-      setPhone('');
-      setSelectedNumbers([]);
-      setAvailableNumbers(getAvailableNumbers(page, numbersPerPage));
-    } catch (err) {
-      setMessage({ type: 'danger', text: `❌ ${err.message}` });
+    if (result.status === 'created') {
+      setMessage({ type: 'success', text: '✅ Participante cadastrado com sucesso!' });
+    } else if (result.status === 'updated') {
+      setMessage({ type: 'info', text: '✏️ Participante atualizado com sucesso!' });
+    } else {
+      throw new Error(result.error || 'Erro ao enviar para a planilha.');
     }
-  };
+
+    // Limpa o formulário
+    setName('');
+    setPhone('');
+    setSelectedNumbers([]);
+    setAvailableNumbers(getAvailableNumbers(page, numbersPerPage));
+  } catch (err) {
+    setMessage({ type: 'danger', text: `❌ ${err.message}` });
+  }
+};
 
   return (
     <div className="card">

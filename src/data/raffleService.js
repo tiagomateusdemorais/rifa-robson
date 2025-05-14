@@ -20,18 +20,21 @@ export function saveParticipants(participants) {
 export function addParticipant(name, phone, numbers, id = uuidv4()) {
   const participants = getParticipants();
 
-  // Verifica duplicata
-  const existing = participants.find(p => p.name === name && p.phone === phone);
-  if (existing) {
-    // Atualiza participante existente
-    existing.numbers = [...new Set([...existing.numbers, ...numbers])];
-    saveParticipants(participants);
-    return existing;
-  }
-
   const usedNumbers = getUsedNumbers();
   const hasConflict = numbers.some((num) => usedNumbers.includes(num));
   if (hasConflict) throw new Error('Um ou mais números já estão atribuídos.');
+
+  // Verifica duplicata por nome + telefone
+  const index = participants.findIndex(p => p.name === name && p.phone === phone);
+
+  if (index !== -1) {
+    // Participante já existe, atualiza os números
+    const existing = participants[index];
+    existing.numbers = [...new Set([...existing.numbers, ...numbers])]; // Evita repetição
+    participants[index] = existing;
+    saveParticipants(participants);
+    return existing;
+  }
 
   const newParticipant = {
     id,
