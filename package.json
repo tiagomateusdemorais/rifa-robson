@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "bootstrap": "^5.3.6",
+    "dotenv": "^16.5.0",
     "file-saver": "^2.0.5",
     "papaparse": "^5.5.2",
     "react": "^19.1.0",

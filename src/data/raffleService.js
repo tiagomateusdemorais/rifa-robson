@@ -5,12 +5,10 @@ const STORAGE_KEYS = {
   DRAW_HISTORY: 'raffle_draws',
 };
 
-// Gera números de 1 a 3500
 export function getAllNumbers() {
   return Array.from({ length: 3500 }, (_, i) => i + 1);
 }
 
-// Participantes
 export function getParticipants() {
   return JSON.parse(localStorage.getItem(STORAGE_KEYS.PARTICIPANTS)) || [];
 }
@@ -21,6 +19,15 @@ export function saveParticipants(participants) {
 
 export function addParticipant(name, phone, numbers, id = uuidv4()) {
   const participants = getParticipants();
+
+  // Verifica duplicata
+  const existing = participants.find(p => p.name === name && p.phone === phone);
+  if (existing) {
+    // Atualiza participante existente
+    existing.numbers = [...new Set([...existing.numbers, ...numbers])];
+    saveParticipants(participants);
+    return existing;
+  }
 
   const usedNumbers = getUsedNumbers();
   const hasConflict = numbers.some((num) => usedNumbers.includes(num));
@@ -38,7 +45,6 @@ export function addParticipant(name, phone, numbers, id = uuidv4()) {
   return newParticipant;
 }
 
-// Números usados
 export function getUsedNumbers() {
   const participants = getParticipants();
   return participants.flatMap((p) => p.numbers);
@@ -59,7 +65,6 @@ export function getAvailableNumbers(page = 1, perPage = 200) {
   }));
 }
 
-// Sorteios
 export function getDrawHistory() {
   return JSON.parse(localStorage.getItem(STORAGE_KEYS.DRAW_HISTORY)) || [];
 }
@@ -105,9 +110,8 @@ export function drawWinners() {
   return draw;
 }
 
-// Função para deletar um participante
 export function removeParticipant(id) {
   const participants = getParticipants();
-  const updated = participants.filter((p) => p.id !== id);
+  const updated = participants.filter(p => p.id !== id);
   saveParticipants(updated);
 }
